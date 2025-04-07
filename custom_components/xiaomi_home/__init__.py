@@ -354,7 +354,7 @@ async def async_remove_config_entry_device(
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     """Migrate old entry."""
     _LOGGER.debug(
-        "Migrating configuration from version %s.%s",
+        'Migrating configuration from version %s.%s',
         config_entry.version,
         config_entry.minor_version,
     )
@@ -367,7 +367,7 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         await _migrate_v1_to_v2(hass, config_entry)
 
     _LOGGER.debug(
-        "Migration to configuration version %s.%s successful",
+        'Migration to configuration version %s.%s successful',
         config_entry.version,
         config_entry.minor_version,
     )
@@ -413,8 +413,8 @@ async def _migrate_v1_to_v2(hass: HomeAssistant, config_entry: ConfigEntry):
         loop=miot_client.main_loop)
     await manufacturer.init_async()
     er = entity_registry.async_get(hass)
-    for did, info in miot_client.device_list.items():
-        spec_instance = await spec_parser.parse(urn=info["urn"])
+    for _, info in miot_client.device_list.items():
+        spec_instance = await spec_parser.parse(urn=info['urn'])
         if not isinstance(spec_instance, MIoTSpecInstance):
             continue
         device: MIoTDevice = MIoTDevice(
@@ -426,15 +426,17 @@ async def _migrate_v1_to_v2(hass: HomeAssistant, config_entry: ConfigEntry):
         device.spec_transform()
 
         # Update unique_id
-        for platform in device.entity_list:
-            for entity in device.entity_list[platform]:
+        for platform, entities in device.entity_list.items():
+            for entity in entities:
                 if not isinstance(entity.spec, MIoTSpecService):
                     continue
                 old_unique_id = device.gen_service_entity_id_v1(
                     ha_domain=DOMAIN,
                     siid=entity.spec.iid,
                 )
-                entity_id = er.async_get_entity_id(platform, DOMAIN, old_unique_id)
+                entity_id = er.async_get_entity_id(
+                    platform, DOMAIN, old_unique_id
+                )
                 if entity_id is None:
                     continue
                 new_unique_id = device.gen_service_entity_id(
